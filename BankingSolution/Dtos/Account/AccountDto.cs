@@ -1,4 +1,4 @@
-﻿namespace BankingSolution.Dtos;
+﻿namespace BankingSolution.Dtos.Account;
 
 public class AccountDto
 {

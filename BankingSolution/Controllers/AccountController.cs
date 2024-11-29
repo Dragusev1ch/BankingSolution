@@ -33,7 +33,7 @@ namespace BankingSolution.Controllers
         [AllowAnonymous]
         public IActionResult GetAccount([FromQuery] int id)
         {
-            var account = _accountService.Get(id);
+            var account = _accountService.GetAccountDtoById(id);
             
             if (account == null)
                 return NotFound();
