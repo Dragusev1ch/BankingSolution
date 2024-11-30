@@ -29,7 +29,7 @@ namespace BankingSolution.Controllers
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetAccount([FromQuery] int id)
+        public IActionResult GetAccount(int id)
         {
             var account = _accountService.GetAccountDtoById(id);
             

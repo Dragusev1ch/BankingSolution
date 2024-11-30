@@ -14,7 +14,7 @@ namespace BankingSolution.Controllers
         {
             _transactionService = transactionService;
         }
-        [HttpPost("accounts/{id}/deposit")]
+        [HttpPost("accounts/deposit")]
         public IActionResult Deposit([FromBody] DepositDto dto)
         {
             try
@@ -28,7 +28,7 @@ namespace BankingSolution.Controllers
             }
         }
 
-        [HttpPost("accounts/{id}/withdraw")]
+        [HttpPost("accounts/withdraw")]
         public IActionResult Withdraw([FromBody] DepositDto dto)
         {
             try

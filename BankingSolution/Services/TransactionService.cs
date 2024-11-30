@@ -30,11 +30,18 @@ public class TransactionService : ITransactionService
     {
         if (withdraw <= 0)
         {
-            throw new ArgumentException("Withdraw must be greater than  zero", nameof(withdraw));
+            throw new ArgumentException("Withdraw must be greater than zero", nameof(withdraw));
         }
+
         var account = _accountService.GetAccountById(accountId)
                       ?? throw new ArgumentException("Account not found", nameof(accountId));
 
+        if (withdraw > account.Balance)
+        {
+            throw new ArgumentException("There are not enough funds in your account to withdraw this amount"
+                , nameof(withdraw));
+        }
+        
         account.Balance -= withdraw;
         return true;
     }
@@ -43,7 +50,7 @@ public class TransactionService : ITransactionService
     {
         if (amount <= 0)
         {
-            throw new ArgumentException("Amount must be greater than  zero", nameof(amount));
+            throw new ArgumentException("Amount must be greater than zero", nameof(amount));
         }
 
         if (fromAccountId == toAccountId)
