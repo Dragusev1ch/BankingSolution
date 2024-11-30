@@ -7,8 +7,8 @@ namespace BankingSolution.Services;
 
 public class AccountService : IAccountService
 {
-    private static readonly List<Account> Accounts = [];
-    private static int _nextId = 1;
+    private readonly List<Account> Accounts = [];
+    private int _nextId = 1;
 
     public void Create(CreateAccountDto account)
     {
