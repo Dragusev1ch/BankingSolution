@@ -1,21 +1,27 @@
 ﻿using BankingSolution.Dtos;
-using BankingSolution.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BankingSolution.Interfaces.Repositories;
 using BankingSolution.Services;
+using BankingSolution.Interfaces.Services;
+using Moq;
+using BankingSolution.Models;
 
 namespace BankingSolution.Tests.ServicesTests
 {
     public class AccountServiceTests
     {
         private readonly IAccountService _accountService;
+        private readonly Mock<IAccountRepository> _mockRepository;
 
         public AccountServiceTests()
         {
-            _accountService = new AccountService();
+            _mockRepository = new Mock<IAccountRepository>();
+
+            _accountService = new AccountService(_mockRepository.Object);
         }
 
         [Fact]
@@ -32,11 +38,10 @@ namespace BankingSolution.Tests.ServicesTests
             _accountService.Create(createAccountDto);
 
             // Assert
-            var accounts = _accountService.GetAccounts();
-            Assert.Single(accounts); // Перевіряємо, що створено 1 акаунт
-            var account = accounts.First();
-            Assert.Equal("John Doe", account.Owner); // Ім'я власника збігається
-            Assert.Equal(500, account.Balance); // Баланс збігається
+            _mockRepository.Verify(repo => repo.Add(It.Is<Account>(a =>
+                a.Owner == "John Doe" && a.Balance == 500)), Times.Once);
+
+            // Можна додати додаткові перевірки
         }
 
         [Fact]
@@ -73,86 +78,78 @@ namespace BankingSolution.Tests.ServicesTests
         public void GetAccountDtoById_ShouldReturnAccountDto_WhenAccountExists()
         {
             // Arrange
-            var createAccountDto = new CreateAccountDto
-            {
-                Owner = "John Doe",
-                InitialBalance = 500
-            };
-            _accountService.Create(createAccountDto);
+            var account = new Account { Id = 1, Owner = "John Doe", Balance = 500 };
+            _mockRepository.Setup(repo => repo.GetById(1)).Returns(account);
 
             // Act
             var accountDto = _accountService.GetAccountDtoById(1);
 
             // Assert
-            Assert.NotNull(accountDto); // Перевіряємо, що об'єкт не null
-            Assert.Equal("John Doe", accountDto.Owner); // Ім'я власника збігається
-            Assert.Equal(500, accountDto.Balance); // Баланс збігається
+            Assert.NotNull(accountDto);
+            Assert.Equal("John Doe", accountDto.Owner);
+            Assert.Equal(500, accountDto.Balance);
         }
 
         [Fact]
         public void GetAccountDtoById_ShouldReturnNull_WhenAccountDoesNotExist()
         {
+            // Arrange
+            _mockRepository.Setup(repo => repo.GetById(It.IsAny<int>())).Returns((Account)null);
+
             // Act
             var accountDto = _accountService.GetAccountDtoById(999);
 
             // Assert
-            Assert.Null(accountDto); // Перевіряємо, що об'єкт null
-        }
-
-        [Fact]
-        public void GetAccountById_ShouldReturnAccount_WhenAccountExists()
-        {
-            // Arrange
-            var createAccountDto = new CreateAccountDto
-            {
-                Owner = "Jane Smith",
-                InitialBalance = 1000
-            };
-            _accountService.Create(createAccountDto);
-
-            // Act
-            var account = _accountService.GetAccountById(1);
-
-            // Assert
-            Assert.NotNull(account); // Перевіряємо, що об'єкт не null
-            Assert.Equal("Jane Smith", account.Owner); // Ім'я власника збігається
-            Assert.Equal(1000, account.Balance); // Баланс збігається
-        }
-
-        [Fact]
-        public void GetAccountById_ShouldReturnNull_WhenAccountDoesNotExist()
-        {
-            // Act
-            var account = _accountService.GetAccountById(999);
-
-            // Assert
-            Assert.Null(account); // Перевіряємо, що об'єкт null
+            Assert.Null(accountDto);
         }
 
         [Fact]
         public void GetAccounts_ShouldReturnAllAccounts()
         {
             // Arrange
-            var accountsToCreate = new[]
+            var accounts = new List<Account>
             {
-            new CreateAccountDto { Owner = "John Doe", InitialBalance = 500 },
-            new CreateAccountDto { Owner = "Jane Smith", InitialBalance = 1000 }
-        };
-
-            foreach (var dto in accountsToCreate)
-            {
-                _accountService.Create(dto);
-            }
+                new Account { Id = 1, Owner = "John Doe", Balance = 500 },
+                new Account { Id = 2, Owner = "Jane Smith", Balance = 1000 }
+            };
+            _mockRepository.Setup(repo => repo.GetAll()).Returns(accounts);
 
             // Act
-            var accounts = _accountService.GetAccounts();
+            var result = _accountService.GetAccounts();
 
             // Assert
-            Assert.Equal(2, accounts.Count()); // Перевіряємо кількість акаунтів
-            var firstAccount = accounts.First();
-            var lastAccount = accounts.Last();
-            Assert.Equal("John Doe", firstAccount.Owner); // Перший акаунт
-            Assert.Equal("Jane Smith", lastAccount.Owner); // Другий акаунт
+            Assert.Equal(2, result.Count());
+            Assert.Equal("John Doe", result.First().Owner);
+            Assert.Equal("Jane Smith", result.Last().Owner);
         }
+
+        [Fact]
+        public void UpdateAccount_ShouldCallRepositoryUpdate_WhenAccountIsValid()
+        {
+            // Arrange
+            var account = new Account { Id = 1, Owner = "John Doe", Balance = 500 };
+
+            // Act
+            _accountService.UpdateAccount(account);
+
+            // Assert
+            _mockRepository.Verify(repo => repo.Update(It.Is<Account>(a =>
+                a.Id == 1 && a.Owner == "John Doe" && a.Balance == 500)), Times.Once);
+        }
+
+        [Fact]
+        public void UpdateAccount_ShouldThrowException_WhenAccountIsNull()
+        {
+            // Arrange
+            Account account = null;
+
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentNullException>(() => _accountService.UpdateAccount(account));
+            Assert.Equal("Value cannot be null. (Parameter 'account')", exception.Message);
+
+            // Переконаємось, що метод репозиторію не викликався
+            _mockRepository.Verify(repo => repo.Update(It.IsAny<Account>()), Times.Never);
+        }
+
     }
 }

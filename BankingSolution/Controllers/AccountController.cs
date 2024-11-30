@@ -1,5 +1,5 @@
 ﻿using BankingSolution.Dtos;
-using BankingSolution.Interfaces;
+using BankingSolution.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,8 +20,8 @@ namespace BankingSolution.Controllers
         [HttpPost]
         public IActionResult Create([FromBody] CreateAccountDto dto)
         {
-            if (dto.InitialBalance < 0)
-                return BadRequest("Initial balance must be positive.");
+            if (!ModelState.IsValid) 
+                return BadRequest(ModelState);
 
             _accountService.Create(dto);
 
@@ -34,7 +34,7 @@ namespace BankingSolution.Controllers
             var account = _accountService.GetAccountDtoById(id);
             
             if (account == null)
-                return NotFound();
+                return NotFound(new { Message = "Account not found" });
 
             return Ok(account);
         }

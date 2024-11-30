@@ -15,44 +15,29 @@ namespace BankingSolution.Controllers
             _transactionService = transactionService;
         }
         [HttpPost("accounts/deposit")]
-        public IActionResult Deposit([FromBody] DepositDto dto)
+        private IActionResult ExecuteSafely(Action action)
+    {
+        try
         {
-            try
-            {
-                _transactionService.Deposit(dto.AccountId, dto.Amount);
-                return Ok("Deposit successful");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            action();
+            return Ok("Operation successful");
         }
-
-        [HttpPost("accounts/withdraw")]
-        public IActionResult Withdraw([FromBody] DepositDto dto)
+        catch (Exception ex)
         {
-            try
-            {
-                _transactionService.Withdraw(dto.AccountId, dto.Amount);
-                return Ok("Withdraw successful");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-        [HttpPost("transfer")]
-        public IActionResult Transfer([FromBody] TransferDto transferDto)
-        {
-            try
-            {
-                 _transactionService.Transfer(transferDto.FromAccountId, transferDto.ToAccountId, transferDto.Amount);
-                return Ok("Transfer successful");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return BadRequest("An error occurred while processing your request.");
         }
     }
+
+    [HttpPost("deposit")]
+    public IActionResult Deposit([FromBody] DepositDto dto) =>
+        ExecuteSafely(() => _transactionService.Deposit(dto.AccountId, dto.Amount));
+
+    [HttpPost("withdraw")]
+    public IActionResult Withdraw([FromBody] WithdrawDto dto) =>
+        ExecuteSafely(() => _transactionService.Withdraw(dto.AccountId, dto.Amount));
+
+    [HttpPost("transfer")]
+    public IActionResult Transfer([FromBody] TransferDto dto) =>
+        ExecuteSafely(() => _transactionService.Transfer(dto.FromAccountId, dto.ToAccountId, dto.Amount));
+}
 }

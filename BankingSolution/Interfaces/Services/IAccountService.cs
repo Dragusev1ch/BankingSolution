@@ -2,7 +2,7 @@
 using BankingSolution.Dtos.Account;
 using BankingSolution.Models;
 
-namespace BankingSolution.Interfaces;
+namespace BankingSolution.Interfaces.Services;
 
 public interface IAccountService
 {
@@ -10,4 +10,5 @@ public interface IAccountService
     AccountDto? GetAccountDtoById(int id);
     public Account? GetAccountById(int id);
     IEnumerable<AccountDto> GetAccounts();
+    void UpdateAccount(Account account);
 }

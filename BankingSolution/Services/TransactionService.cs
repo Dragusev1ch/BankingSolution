@@ -1,4 +1,5 @@
 ﻿using BankingSolution.Interfaces;
+using BankingSolution.Interfaces.Services;
 using BankingSolution.Models;
 
 namespace BankingSolution.Services;
@@ -14,66 +15,69 @@ public class TransactionService : ITransactionService
 
     public bool Deposit(int accountId, decimal deposit)
     {
-        if (deposit <= 0)
-        {
-            throw new ArgumentException("Amount must be greater than zero", nameof(deposit));
-        }
+        ValidateAmount(deposit);
 
-        var account = _accountService.GetAccountById(accountId) 
-                      ?? throw new ArgumentException("Account not found", nameof(accountId));
-        
+        var account = GetValidAccount(accountId);
         account.Balance += deposit;
+
+        // Рекомендується викликати метод для оновлення стану акаунту в репозиторії через сервіс акаунтів
+        _accountService.UpdateAccount(account);
         return true;
     }
 
     public bool Withdraw(int accountId, decimal withdraw)
     {
-        if (withdraw <= 0)
+        ValidateAmount(withdraw);
+
+        var account = GetValidAccount(accountId);
+
+        if (account.Balance < withdraw)
         {
-            throw new ArgumentException("Withdraw must be greater than zero", nameof(withdraw));
+            throw new InvalidOperationException("Insufficient funds in your account");
         }
 
-        var account = _accountService.GetAccountById(accountId)
-                      ?? throw new ArgumentException("Account not found", nameof(accountId));
-
-        if (withdraw > account.Balance)
-        {
-            throw new ArgumentException("There are not enough funds in your account to withdraw this amount"
-                , nameof(withdraw));
-        }
-        
         account.Balance -= withdraw;
+        _accountService.UpdateAccount(account);
         return true;
     }
 
     public bool Transfer(int fromAccountId, int toAccountId, decimal amount)
     {
-        if (amount <= 0)
-        {
-            throw new ArgumentException("Amount must be greater than zero", nameof(amount));
-        }
+        ValidateAmount(amount);
 
         if (fromAccountId == toAccountId)
         {
-            throw new ArgumentException("From and to account cannot be same", nameof(toAccountId));
+            throw new ArgumentException("From and to account cannot be the same", nameof(toAccountId));
         }
 
-        var fromAccount = _accountService.GetAccountById(fromAccountId);
-        var toAccount = _accountService.GetAccountById(toAccountId);
-
-        if (fromAccount == null || toAccount == null)
-        {
-            throw new ArgumentException("One of both accounts not found");
-        }
+        var fromAccount = GetValidAccount(fromAccountId);
+        var toAccount = GetValidAccount(toAccountId);
 
         if (fromAccount.Balance < amount)
         {
-            throw new InvalidOperationException("Insufficient funds in from account");  
+            throw new InvalidOperationException("Insufficient funds in from account");
         }
 
         fromAccount.Balance -= amount;
         toAccount.Balance += amount;
 
+        _accountService.UpdateAccount(fromAccount);
+        _accountService.UpdateAccount(toAccount);
+
         return true;
+    }
+
+    private static void ValidateAmount(decimal amount)
+    {
+        if (amount <= 0)
+        {
+            throw new ArgumentException("Amount must be greater than zero", nameof(amount));
+        }
+    }
+
+    private Account GetValidAccount(int accountId)
+    {
+        return _accountService.GetAccountById(accountId)
+               ?? throw new ArgumentException("Account not found", nameof(accountId));
     }
 }
