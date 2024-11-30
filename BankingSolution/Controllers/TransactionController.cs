@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BankingSolution.Controllers
 {
     [ApiController]
+    [Route("api/[controller]")]
     public class TransactionController : Controller
     {
         ITransactionService _transactionService;
@@ -13,8 +14,7 @@ namespace BankingSolution.Controllers
         {
             _transactionService = transactionService;
         }
-        [HttpPost]
-        [Route("api/transaction/deposit")]
+        [HttpPost("accounts/{id}/deposit")]
         public IActionResult Deposit([FromBody] DepositDto dto)
         {
             try
@@ -28,8 +28,7 @@ namespace BankingSolution.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("api/transaction/withdraw")]
+        [HttpPost("accounts/{id}/withdraw")]
         public IActionResult Withdraw([FromBody] DepositDto dto)
         {
             try
@@ -42,7 +41,7 @@ namespace BankingSolution.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        [HttpPost("api/transaction/transfer")]
+        [HttpPost("transfer")]
         public IActionResult Transfer([FromBody] TransferDto transferDto)
         {
             try
