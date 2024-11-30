@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BankingSolution.Tests.ServicesTests
 {
-    internal class AccountService
+    internal class TransactionServiceTests
     {
     }
 }

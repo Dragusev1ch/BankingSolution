@@ -1,6 +1,6 @@
 ﻿namespace BankingSolution.Tests.ControllersTests;
 
-public class AccountsController
+public class AccountsControllerTests
 {
     
 }
