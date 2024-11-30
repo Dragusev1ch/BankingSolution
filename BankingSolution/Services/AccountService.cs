@@ -1,4 +1,5 @@
 ﻿using BankingSolution.Dtos;
+using BankingSolution.Dtos.Account;
 using BankingSolution.Interfaces;
 using BankingSolution.Models;
 
@@ -26,7 +27,7 @@ public class AccountService : IAccountService
         Accounts.Add(newAccount);
     }
 
-    public AccountDto? Get(int id)
+    public AccountDto? GetAccountDtoById(int id)
     {
         var account = Accounts.FirstOrDefault(a => a.Id == id);
         
@@ -40,6 +41,11 @@ public class AccountService : IAccountService
         };
 
         return accountDto;
+    }
+
+    public Account? GetAccountById(int id)
+    {
+        return Accounts.FirstOrDefault(a => a.Id == id);
     }
 
     public IEnumerable<AccountDto> GetAccounts()

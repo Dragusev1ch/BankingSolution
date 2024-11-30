@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BankingSolution.Controllers
 {
     [ApiController]
-    [Route("api/account")]
+    [Route("api/[controller]")]
     public class AccountController : Controller
     {
         private readonly IAccountService _accountService;
@@ -18,7 +18,6 @@ namespace BankingSolution.Controllers
         }
 
         [HttpPost]
-        [AllowAnonymous]
         public IActionResult Create([FromBody] CreateAccountDto dto)
         {
             if (dto.InitialBalance < 0)
@@ -29,11 +28,10 @@ namespace BankingSolution.Controllers
             return Ok();
         }
 
-        [HttpGet]
-        [AllowAnonymous]
+        [HttpGet("{id}")]
         public IActionResult GetAccount([FromQuery] int id)
         {
-            var account = _accountService.Get(id);
+            var account = _accountService.GetAccountDtoById(id);
             
             if (account == null)
                 return NotFound();
@@ -42,8 +40,6 @@ namespace BankingSolution.Controllers
         }
 
         [HttpGet]
-        [Route("api/accounts")]
-        [AllowAnonymous]
         public IActionResult GetAccounts()
         {
             return Ok(_accountService.GetAccounts());
