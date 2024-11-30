@@ -27,5 +27,20 @@ namespace BankingSolution.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpPost]
+        [Route("api/transaction/withdraw")]
+        public IActionResult Withdraw([FromBody] DepositDto dto)
+        {
+            try
+            {
+                _transactionService.Withdraw(dto.AccountId, dto.Amount);
+                return Ok("Withdraw successful");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

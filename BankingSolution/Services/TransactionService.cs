@@ -28,7 +28,15 @@ public class TransactionService : ITransactionService
 
     public bool Withdraw(int accountId, decimal withdraw)
     {
-        throw new NotImplementedException();
+        if (withdraw <= 0)
+        {
+            throw new ArgumentException("Withdraw must be greater than  zero", nameof(withdraw));
+        }
+        var account = _accountService.GetAccountById(accountId)
+                      ?? throw new ArgumentException("Account not found", nameof(accountId));
+
+        account.Balance -= withdraw;
+        return true;
     }
 
     public bool Transfer(int fromAccountId, int toAccountId, decimal amount)
