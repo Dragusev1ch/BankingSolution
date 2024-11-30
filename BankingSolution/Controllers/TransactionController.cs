@@ -6,38 +6,93 @@ namespace BankingSolution.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class TransactionController : Controller
+    public class TransactionController : ControllerBase
     {
-        ITransactionService _transactionService;
+        private readonly ITransactionService _transactionService;
 
         public TransactionController(ITransactionService transactionService)
         {
             _transactionService = transactionService;
         }
-        [HttpPost("accounts/deposit")]
+
         private IActionResult ExecuteSafely(Action action)
-    {
-        try
         {
-            action();
-            return Ok("Operation successful");
+            try
+            {
+                action();
+                return Ok(new { Message = "Operation successful" });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
+                {
+                    Error = "Invalid argument",
+                    Details = ex.Message
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new
+                {
+                    Error = "Operation failed",
+                    Details = ex.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    Error = "Internal Server Error",
+                    Details = "An unexpected error occurred. Please try again later.",
+                    ExceptionMessage = ex.Message // Опціонально: для дебагу
+                });
+            }
         }
-        catch (Exception ex)
+
+        [HttpPost("deposit")]
+        public IActionResult Deposit([FromBody] DepositDto dto)
         {
-            return BadRequest("An error occurred while processing your request.");
+            if (dto == null)
+            {
+                return BadRequest(new
+                {
+                    Error = "Invalid input",
+                    Details = "The request body cannot be null."
+                });
+            }
+
+            return ExecuteSafely(() => _transactionService.Deposit(dto.AccountId, dto.Amount));
+        }
+
+        [HttpPost("withdraw")]
+        public IActionResult Withdraw([FromBody] WithdrawDto dto)
+        {
+            if (dto == null)
+            {
+                return BadRequest(new
+                {
+                    Error = "Invalid input",
+                    Details = "The request body cannot be null."
+                });
+            }
+
+            return ExecuteSafely(() => _transactionService.Withdraw(dto.AccountId, dto.Amount));
+        }
+
+        [HttpPost("transfer")]
+        public IActionResult Transfer([FromBody] TransferDto dto)
+        {
+            if (dto == null)
+            {
+                return BadRequest(new
+                {
+                    Error = "Invalid input",
+                    Details = "The request body cannot be null."
+                });
+            }
+
+            return ExecuteSafely(() =>
+                _transactionService.Transfer(dto.FromAccountId, dto.ToAccountId, dto.Amount));
         }
     }
-
-    [HttpPost("deposit")]
-    public IActionResult Deposit([FromBody] DepositDto dto) =>
-        ExecuteSafely(() => _transactionService.Deposit(dto.AccountId, dto.Amount));
-
-    [HttpPost("withdraw")]
-    public IActionResult Withdraw([FromBody] WithdrawDto dto) =>
-        ExecuteSafely(() => _transactionService.Withdraw(dto.AccountId, dto.Amount));
-
-    [HttpPost("transfer")]
-    public IActionResult Transfer([FromBody] TransferDto dto) =>
-        ExecuteSafely(() => _transactionService.Transfer(dto.FromAccountId, dto.ToAccountId, dto.Amount));
-}
 }
