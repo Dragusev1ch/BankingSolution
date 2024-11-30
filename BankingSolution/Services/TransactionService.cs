@@ -41,6 +41,32 @@ public class TransactionService : ITransactionService
 
     public bool Transfer(int fromAccountId, int toAccountId, decimal amount)
     {
-        throw new NotImplementedException();
+        if (amount <= 0)
+        {
+            throw new ArgumentException("Amount must be greater than  zero", nameof(amount));
+        }
+
+        if (fromAccountId == toAccountId)
+        {
+            throw new ArgumentException("From and to account cannot be same", nameof(toAccountId));
+        }
+
+        var fromAccount = _accountService.GetAccountById(fromAccountId);
+        var toAccount = _accountService.GetAccountById(toAccountId);
+
+        if (fromAccount == null || toAccount == null)
+        {
+            throw new ArgumentException("One of both accounts not found");
+        }
+
+        if (fromAccount.Balance < amount)
+        {
+            throw new InvalidOperationException("Insufficient funds in from account");  
+        }
+
+        fromAccount.Balance -= amount;
+        toAccount.Balance += amount;
+
+        return true;
     }
 }

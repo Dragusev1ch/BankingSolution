@@ -42,5 +42,18 @@ namespace BankingSolution.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [HttpPost("api/transaction/transfer")]
+        public IActionResult Transfer([FromBody] TransferDto transferDto)
+        {
+            try
+            {
+                 _transactionService.Transfer(transferDto.FromAccountId, transferDto.ToAccountId, transferDto.Amount);
+                return Ok("Transfer successful");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
