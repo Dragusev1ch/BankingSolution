@@ -7,6 +7,7 @@ using BankingSolution.Interfaces;
 using BankingSolution.Models;
 using BankingSolution.Services;
 using Moq;
+using Xunit;
 
 namespace BankingSolution.Tests.ServicesTests
 {
@@ -107,6 +108,28 @@ namespace BankingSolution.Tests.ServicesTests
             // Act & Assert
             var exception = Assert.Throws<ArgumentException>(() => _transactionService.Withdraw(accountId, withdrawAmount));
             Assert.Equal("Account not found (Parameter 'accountId')", exception.Message);
+        }
+
+        [Fact]
+        public void Withdraw_ThrowsArgumentException_WhenWithdrawExceedsBalance()
+        {
+            var accountId = 1;
+            var account = new Account
+            {
+                Id = accountId,
+                Balance = 100m // Баланс рахунку
+            };
+
+            _accountServiceMock.Setup(s => s.GetAccountById(accountId)).Returns(account);
+
+            var withdrawAmount = 150m; // Сума, яка перевищує баланс
+
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentException>(() => _transactionService.Withdraw(accountId, withdrawAmount));
+            Assert.Equal("There are not enough funds in your account to withdraw this amount (Parameter 'withdraw')", exception.Message);
+
+            // Перевіряємо, що метод GetAccountById викликався один раз
+            _accountServiceMock.Verify(s => s.GetAccountById(accountId), Times.Once);
         }
 
         [Fact]
