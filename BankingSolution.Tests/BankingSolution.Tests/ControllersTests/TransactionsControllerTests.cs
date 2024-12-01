@@ -2,6 +2,7 @@
 using BankingSolution.Dtos.Deposit;
 using BankingSolution.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace BankingSolution.Tests.ControllersTests
@@ -9,12 +10,14 @@ namespace BankingSolution.Tests.ControllersTests
     public class TransactionsControllerTests
     {
         private readonly Mock<ITransactionService> _transactionServiceMock;
+        private readonly Mock<ILogger<TransactionController>> _loggerMock;
         private readonly TransactionController _controller;
 
         public TransactionsControllerTests()
         {
             _transactionServiceMock = new Mock<ITransactionService>();
-            _controller = new TransactionController(_transactionServiceMock.Object);
+            _loggerMock = new Mock<ILogger<TransactionController>>();
+            _controller = new TransactionController(_transactionServiceMock.Object, _loggerMock.Object);
         }
 
         [Fact]

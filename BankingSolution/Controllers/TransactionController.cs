@@ -1,6 +1,7 @@
 ﻿using BankingSolution.Dtos.Deposit;
 using BankingSolution.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace BankingSolution.Controllers
 {
@@ -9,21 +10,27 @@ namespace BankingSolution.Controllers
     public class TransactionController : ControllerBase
     {
         private readonly ITransactionService _transactionService;
+        private readonly ILogger<TransactionController> _logger;
 
-        public TransactionController(ITransactionService transactionService)
+        public TransactionController(ITransactionService transactionService, ILogger<TransactionController> logger)
         {
             _transactionService = transactionService;
+            _logger = logger;
         }
 
-        private IActionResult ExecuteSafely(Action action)
+        private IActionResult ExecuteSafely(Action action, string operationName)
         {
             try
             {
+                _logger.LogInformation("Starting operation: {Operation}.", operationName);
                 action();
+                _logger.LogInformation("Operation {Operation} completed successfully.", operationName);
+
                 return Ok(new { Message = "Operation successful" });
             }
             catch (ArgumentException ex)
             {
+                _logger.LogWarning(ex, "Invalid argument during operation: {Operation}.", operationName);
                 return BadRequest(new
                 {
                     Error = "Invalid argument",
@@ -32,6 +39,7 @@ namespace BankingSolution.Controllers
             }
             catch (InvalidOperationException ex)
             {
+                _logger.LogWarning(ex, "Operation {Operation} failed due to conflict.", operationName);
                 return Conflict(new
                 {
                     Error = "Operation failed",
@@ -40,11 +48,12 @@ namespace BankingSolution.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Unexpected error during operation: {Operation}.", operationName);
                 return StatusCode(500, new
                 {
                     Error = "Internal Server Error",
                     Details = "An unexpected error occurred. Please try again later.",
-                    ExceptionMessage = ex.Message // Опціонально: для дебагу
+                    ExceptionMessage = ex.Message
                 });
             }
         }
@@ -54,6 +63,7 @@ namespace BankingSolution.Controllers
         {
             if (dto == null)
             {
+                _logger.LogWarning("Deposit request body is null.");
                 return BadRequest(new
                 {
                     Error = "Invalid input",
@@ -61,7 +71,7 @@ namespace BankingSolution.Controllers
                 });
             }
 
-            return ExecuteSafely(() => _transactionService.Deposit(dto.AccountId, dto.Amount));
+            return ExecuteSafely(() => _transactionService.Deposit(dto.AccountId, dto.Amount), "Deposit");
         }
 
         [HttpPost("withdraw")]
@@ -69,6 +79,7 @@ namespace BankingSolution.Controllers
         {
             if (dto == null)
             {
+                _logger.LogWarning("Withdraw request body is null.");
                 return BadRequest(new
                 {
                     Error = "Invalid input",
@@ -76,7 +87,7 @@ namespace BankingSolution.Controllers
                 });
             }
 
-            return ExecuteSafely(() => _transactionService.Withdraw(dto.AccountId, dto.Amount));
+            return ExecuteSafely(() => _transactionService.Withdraw(dto.AccountId, dto.Amount), "Withdraw");
         }
 
         [HttpPost("transfer")]
@@ -84,6 +95,7 @@ namespace BankingSolution.Controllers
         {
             if (dto == null)
             {
+                _logger.LogWarning("Transfer request body is null.");
                 return BadRequest(new
                 {
                     Error = "Invalid input",
@@ -91,8 +103,7 @@ namespace BankingSolution.Controllers
                 });
             }
 
-            return ExecuteSafely(() =>
-                _transactionService.Transfer(dto.FromAccountId, dto.ToAccountId, dto.Amount));
+            return ExecuteSafely(() => _transactionService.Transfer(dto.FromAccountId, dto.ToAccountId, dto.Amount), "Transfer");
         }
     }
 }
