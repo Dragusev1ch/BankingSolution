@@ -3,19 +3,22 @@ using BankingSolution.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using BankingSolution.Controllers;
-using BankingSolution.Interfaces;
+using BankingSolution.Interfaces.Services;
+using Microsoft.Extensions.Logging;
 
 namespace BankingSolution.Tests.ControllersTests;
 
 public class AccountsControllerTests
 {
     private readonly Mock<IAccountService> _accountServiceMock;
+    private readonly Mock<ILogger<AccountController>> _loggerMock;
     private readonly AccountController _controller;
 
     public AccountsControllerTests()
     {
         _accountServiceMock = new Mock<IAccountService>();
-        _controller = new AccountController(_accountServiceMock.Object);
+        _loggerMock = new Mock<ILogger<AccountController>>();
+        _controller = new AccountController(_accountServiceMock.Object, _loggerMock.Object);
     }
 
     [Fact]
@@ -32,7 +35,7 @@ public class AccountsControllerTests
         var result = _controller.Create(createAccountDto);
 
         // Assert
-        Assert.IsType<OkResult>(result);
+        Assert.IsType<OkObjectResult>(result);
         _accountServiceMock.Verify(s => s.Create(createAccountDto), Times.Once);
     }
 
@@ -46,13 +49,23 @@ public class AccountsControllerTests
             InitialBalance = -100
         };
 
+        var controller = new AccountController(_accountServiceMock.Object, _loggerMock.Object);
+        controller.ModelState.AddModelError("InitialBalance", "Initial balance must be a positive value");
+
         // Act
-        var result = _controller.Create(createAccountDto);
+        var result = controller.Create(createAccountDto);
 
         // Assert
         Assert.IsType<BadRequestObjectResult>(result);
+
         var badRequest = result as BadRequestObjectResult;
-        Assert.Equal("Initial balance must be positive.", badRequest.Value);
+        Assert.NotNull(badRequest);
+        Assert.IsAssignableFrom<SerializableError>(badRequest.Value);
+
+        var errors = badRequest.Value as SerializableError;
+        Assert.Contains("InitialBalance", errors.Keys);
+        Assert.Contains("Initial balance must be a positive value", errors["InitialBalance"] as string[]);
+
         _accountServiceMock.Verify(s => s.Create(It.IsAny<CreateAccountDto>()), Times.Never);
     }
 
@@ -97,7 +110,7 @@ public class AccountsControllerTests
         var result = _controller.GetAccount(accountId);
 
         // Assert
-        Assert.IsType<NotFoundResult>(result);
+        Assert.IsType<NotFoundObjectResult>(result);
         _accountServiceMock.Verify(s => s.GetAccountDtoById(accountId), Times.Once);
     }
 

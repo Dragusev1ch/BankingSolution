@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BankingSolution.Interfaces;
+using BankingSolution.Interfaces.Services;
 using BankingSolution.Models;
 using BankingSolution.Services;
 using Moq;
@@ -49,7 +50,7 @@ namespace BankingSolution.Tests.ServicesTests
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentException>(() => _transactionService.Deposit(accountId, depositAmount));
-            Assert.Equal("Amount must be greater than zero (Parameter 'deposit')", exception.Message);
+            Assert.Equal("Amount must be greater than zero (Parameter 'amount')", exception.Message);
         }
 
         [Fact]
@@ -93,7 +94,7 @@ namespace BankingSolution.Tests.ServicesTests
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentException>(() => _transactionService.Withdraw(accountId, withdrawAmount));
-            Assert.Equal("Withdraw must be greater than zero (Parameter 'withdraw')", exception.Message);
+            Assert.Equal("Amount must be greater than zero (Parameter 'amount')", exception.Message);
         }
 
         [Fact]
@@ -125,8 +126,8 @@ namespace BankingSolution.Tests.ServicesTests
             var withdrawAmount = 150m; // Сума, яка перевищує баланс
 
             // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => _transactionService.Withdraw(accountId, withdrawAmount));
-            Assert.Equal("There are not enough funds in your account to withdraw this amount (Parameter 'withdraw')", exception.Message);
+            var exception = Assert.Throws<InvalidOperationException>(() => _transactionService.Withdraw(accountId, withdrawAmount));
+            Assert.Equal("Insufficient funds in your account", exception.Message);
 
             // Перевіряємо, що метод GetAccountById викликався один раз
             _accountServiceMock.Verify(s => s.GetAccountById(accountId), Times.Once);
@@ -176,7 +177,7 @@ namespace BankingSolution.Tests.ServicesTests
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentException>(() => _transactionService.Transfer(accountId, accountId, transferAmount));
-            Assert.Equal("From and to account cannot be same (Parameter 'toAccountId')", exception.Message);
+            Assert.Equal("From and to account cannot be the same (Parameter 'toAccountId')", exception.Message);
         }
 
         [Fact]
@@ -191,7 +192,7 @@ namespace BankingSolution.Tests.ServicesTests
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentException>(() => _transactionService.Transfer(fromAccountId, toAccountId, transferAmount));
-            Assert.Equal("One of both accounts not found", exception.Message);
+            Assert.Equal("Account not found (Parameter 'accountId')", exception.Message);
         }
 
         [Fact]
